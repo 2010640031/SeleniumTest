@@ -1,5 +1,7 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
 
 
 namespace SeleniumTest.SeleniumTest
@@ -74,9 +76,7 @@ namespace SeleniumTest.SeleniumTest
             Console.WriteLine($"-------------------------------------");
             Console.WriteLine("Starting Test for Fibonacci Page");
 
-            var initialLoadTime = NavigateToUrl(driver, "http://localhost:5046/fibonacciPage");
-
-            WaitForPageLoad(4000);
+            var initialLoadTime = NavigateToUrl(driver, "http://localhost:5046/fibonacciPage", "fibonaccibtn");
 
             var calculateButton = driver.FindElement(By.Id("fibonaccibtn"));
 
@@ -211,13 +211,26 @@ namespace SeleniumTest.SeleniumTest
             Console.WriteLine("-------------------------------------");
         }
 
-        private static long NavigateToUrl(IWebDriver driver, string url)
+        private static long NavigateToUrl(IWebDriver driver, string url, string? load = null)
         {
             var initTracker = new Tracker();
             initTracker.SetupAndStartMonitoring();
 
             initTracker.StartTime();
             driver.Navigate().GoToUrl(url);
+
+            if (load is not null)
+            {
+                try
+                {
+                    new WebDriverWait(driver, TimeSpan.FromSeconds(20)).Until(ExpectedConditions.ElementToBeClickable(By.Id(load)));
+                }
+                catch (NoSuchElementException e)
+                {
+                }
+               
+            }
+            
             initTracker.StopTime();
 
             Console.WriteLine($"-------------------------------------");
