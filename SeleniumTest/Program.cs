@@ -10,44 +10,56 @@ namespace SeleniumTest.SeleniumTest
     {
         private const string Header = "Iteration;Time;Memory;ProcessorTime;";
         private static readonly string BaseDirectory = Directory.GetCurrentDirectory();
-        private static readonly string ResultsDirectory = Path.Combine(BaseDirectory, "TestResults");
+        private static readonly string AngularResults = Path.Combine(BaseDirectory, "AngularTestResults");
+        private static readonly string BlazorResults = Path.Combine(BaseDirectory, "BlazorTestResults");
 
         public static void Main()
         {
             Console.WriteLine("=/=/=/=/=/=/=/=START/=/=/=/=/=/=/=/=/");
-
-            InitializeFiles();
-
-            for (var i = 1; i < 11; i++)
+            
+            var testCases = new List<TestCase>
             {
-                ExecuteTests(i);
+                new(){Name = "Angular", Url = "http://localhost:44432", ResultsDirectory = AngularResults},
+                new(){Name = "Blazor", Url = "http://localhost:5046", ResultsDirectory = BlazorResults}
+            };
+
+            foreach (var testCase in testCases)
+            {
+                
+                Console.WriteLine($"=/=/=/=/=/Starting Test for {testCase.Name}/=/=/=/=/=/=/=/=/");
+                InitializeFiles(testCase.ResultsDirectory);
+
+                for (var i = 1; i < 4; i++)
+                {
+                    ExecuteTests(i,testCase);
+                }
             }
 
             Console.WriteLine("=/=/=/=/=/=/=/=/=END=/=/=/=/=/=/=/=/=");
         }
 
-        private static void InitializeFiles()
+        private static void InitializeFiles(string resultsDirectory)
         {
-            if (!Directory.Exists(ResultsDirectory))
+            if (!Directory.Exists(resultsDirectory))
             {
-                Directory.CreateDirectory(ResultsDirectory);
+                Directory.CreateDirectory(resultsDirectory);
             }
 
-            InitializeFile("fibonacciFile.csv", Header);
-            InitializeFile("warmStartListPageFile.csv", Header);
-            InitializeFile("setColorListPageFile.csv", Header);
-            InitializeFile("filterListPageFile.csv", Header);
-            InitializeFile("InitialLoadTimesFile.csv", "Iteration;FibonacciPage;ListPage;");
+            InitializeFile("primeFile.csv", Header, resultsDirectory);
+            InitializeFile("warmStartListPageFile.csv", Header, resultsDirectory);
+            InitializeFile("setColorListPageFile.csv", Header, resultsDirectory);
+            InitializeFile("filterListPageFile.csv", Header, resultsDirectory);
+            InitializeFile("InitialLoadTimesFile.csv", "Iteration;primenPage;ListPage;", resultsDirectory);
         }
 
-        private static void InitializeFile(string fileName, string header)
+        private static void InitializeFile(string fileName, string header, string resultsDirectory)
         {
-            var filePath = Path.Combine(ResultsDirectory, fileName);
+            var filePath = Path.Combine(resultsDirectory, fileName);
             using var writer = new StreamWriter(filePath);
             writer.WriteLine(header);
         }
 
-        private static void ExecuteTests(int iteration)
+        private static void ExecuteTests(int iteration, TestCase testCase)
         {
             using IWebDriver driver = new ChromeDriver();
             Console.WriteLine("=====================================");
@@ -55,30 +67,30 @@ namespace SeleniumTest.SeleniumTest
             Console.WriteLine("=====================================");
 
            
-            var fibonacciFilePath = Path.Combine(ResultsDirectory, "fibonacciFile.csv");
-            var setColorListPageFilePath = Path.Combine(ResultsDirectory, "setColorListPageFile.csv");
-            var filterListPageFilePath = Path.Combine(ResultsDirectory, "filterListPageFile.csv");
-            var warmStartListPageFilePath = Path.Combine(ResultsDirectory, "warmStartListPageFile.csv");
-            var initialLoadTimesFilePath = Path.Combine(ResultsDirectory, "InitialLoadTimesFile.csv");
+            var primeFilePath = Path.Combine(testCase.ResultsDirectory, "primeFile.csv");
+            var setColorListPageFilePath = Path.Combine(testCase.ResultsDirectory, "setColorListPageFile.csv");
+            var filterListPageFilePath = Path.Combine(testCase.ResultsDirectory, "filterListPageFile.csv");
+            var warmStartListPageFilePath = Path.Combine(testCase.ResultsDirectory, "warmStartListPageFile.csv");
+            var initialLoadTimesFilePath = Path.Combine(testCase.ResultsDirectory, "InitialLoadTimesFile.csv");
 
-            var initialLoadTimeFibonacciPage = ExecuteFibonacciTest(driver, iteration, fibonacciFilePath);
+            var initialLoadTimeprimePage = ExecutePrimeTest(driver, iteration, primeFilePath, testCase.Url);
             var initialLoadTimeListPage =
-                ExecuteListPageModificationTest(driver, iteration, setColorListPageFilePath, filterListPageFilePath);
+                ExecuteListPageModificationTest(driver, iteration, setColorListPageFilePath, filterListPageFilePath, testCase.Url);
             
-            ExecuteListPageWarmStartTest(iteration, warmStartListPageFilePath);
+            ExecuteListPageWarmStartTest(iteration, warmStartListPageFilePath, testCase.Url);
             
-            var dataLine = $"{iteration};{initialLoadTimeFibonacciPage}ms;{initialLoadTimeListPage}ms;";
+            var dataLine = $"{iteration};{initialLoadTimeprimePage}ms;{initialLoadTimeListPage}ms;";
             AppendDataToFile(initialLoadTimesFilePath, dataLine);
         }
 
-        private static long ExecuteFibonacciTest(IWebDriver driver, int i, string filePath)
+        private static long ExecutePrimeTest(IWebDriver driver, int i, string filePath, string url)
         {
             Console.WriteLine($"-------------------------------------");
-            Console.WriteLine("Starting Test for Fibonacci Page");
+            Console.WriteLine("Starting Test for Prime Page");
 
-            var initialLoadTime = NavigateToUrl(driver, "http://localhost:5046/fibonacciPage", "fibonaccibtn");
+            var initialLoadTime = NavigateToUrl(driver, url+"/primePage", "primebtn");
 
-            var calculateButton = driver.FindElement(By.Id("fibonaccibtn"));
+            var calculateButton = driver.FindElement(By.Id("primebtn"));
 
             var calcTracker = new Tracker();
 
@@ -109,12 +121,12 @@ namespace SeleniumTest.SeleniumTest
         }
 
         private static long ExecuteListPageModificationTest(IWebDriver driver, int i, string setColorListPageFilePath,
-            string filterListPageFilePath)
+            string filterListPageFilePath, string url)
         {
             Console.WriteLine($"-------------------------------------");
             Console.WriteLine("Starting Test for List Page");
 
-            var initialLoadTime = NavigateToUrl(driver, "http://localhost:5046/listPage");
+            var initialLoadTime = NavigateToUrl(driver, url + "/listPage");
             WaitForPageLoad(4000);
 
             ExecuteToggle(driver, i, filterListPageFilePath);
@@ -128,7 +140,7 @@ namespace SeleniumTest.SeleniumTest
             Console.WriteLine($"-------------------------------------");
             Console.WriteLine("Starting Test for ColorSet");
 
-            var setColorButton = driver.FindElement(By.Id("setcolorredbtn"));
+            var setColorButton = driver.FindElement(By.Id("setcolorchromabtn"));
 
             var colorTestTracker = new Tracker();
             colorTestTracker.SetupAndStartMonitoring();
@@ -180,19 +192,19 @@ namespace SeleniumTest.SeleniumTest
             Console.WriteLine("-------------------------------------");
         }
 
-        private static void ExecuteListPageWarmStartTest(int i, string warmStartListPageFilePath)
+        private static void ExecuteListPageWarmStartTest(int i, string warmStartListPageFilePath, string url)
         {
             Console.WriteLine($"-------------------------------------");
             Console.WriteLine("Starting Test for Warm start LoadTime");
             using IWebDriver driver = new ChromeDriver();
-            driver.Navigate().GoToUrl("http://localhost:5046/listPage");
-            driver.Navigate().GoToUrl("http://localhost:5046/");
+            driver.Navigate().GoToUrl(url + "/listPage");
+            driver.Navigate().GoToUrl(url);
 
             var warmStartTestTracker = new Tracker();
             warmStartTestTracker.SetupAndStartMonitoring();
 
             warmStartTestTracker.StartTime();
-            driver.Navigate().GoToUrl("http://localhost:5046/listPage");
+            driver.Navigate().GoToUrl(url + "/listPage");
             warmStartTestTracker.StopTime();
 
             var time = $"{warmStartTestTracker.GetTime()}ms";
