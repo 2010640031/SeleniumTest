@@ -16,22 +16,21 @@ namespace SeleniumTest.SeleniumTest
         public static void Main()
         {
             Console.WriteLine("=/=/=/=/=/=/=/=START/=/=/=/=/=/=/=/=/");
-            
+
             var testCases = new List<TestCase>
             {
-                new(){Name = "Angular", Url = "http://localhost:44432", ResultsDirectory = AngularResults},
-                new(){Name = "Blazor", Url = "http://localhost:5046", ResultsDirectory = BlazorResults}
+                /*new() { Name = "Angular", Url = "http://localhost:44432", ResultsDirectory = AngularResults },*/
+                new() { Name = "Blazor", Url = "http://localhost:5046", ResultsDirectory = BlazorResults }
             };
 
             foreach (var testCase in testCases)
             {
-                
                 Console.WriteLine($"=/=/=/=/=/Starting Test for {testCase.Name}/=/=/=/=/=/=/=/=/");
                 InitializeFiles(testCase.ResultsDirectory);
 
-                for (var i = 1; i < 4; i++)
+                for (var i = 1; i < 101; i++)
                 {
-                    ExecuteTests(i,testCase);
+                    ExecuteTests(i, testCase);
                 }
             }
 
@@ -49,7 +48,7 @@ namespace SeleniumTest.SeleniumTest
             InitializeFile("warmStartListPageFile.csv", Header, resultsDirectory);
             InitializeFile("setColorListPageFile.csv", Header, resultsDirectory);
             InitializeFile("filterListPageFile.csv", Header, resultsDirectory);
-            InitializeFile("InitialLoadTimesFile.csv", "Iteration;primenPage;ListPage;", resultsDirectory);
+            InitializeFile("InitialLoadTimesFile.csv", "Iteration;primePage;ListPage;", resultsDirectory);
         }
 
         private static void InitializeFile(string fileName, string header, string resultsDirectory)
@@ -61,34 +60,41 @@ namespace SeleniumTest.SeleniumTest
 
         private static void ExecuteTests(int iteration, TestCase testCase)
         {
-            using IWebDriver driver = new ChromeDriver();
             Console.WriteLine("=====================================");
             Console.WriteLine($"Iteration {iteration}");
             Console.WriteLine("=====================================");
 
-           
+
             var primeFilePath = Path.Combine(testCase.ResultsDirectory, "primeFile.csv");
             var setColorListPageFilePath = Path.Combine(testCase.ResultsDirectory, "setColorListPageFile.csv");
             var filterListPageFilePath = Path.Combine(testCase.ResultsDirectory, "filterListPageFile.csv");
             var warmStartListPageFilePath = Path.Combine(testCase.ResultsDirectory, "warmStartListPageFile.csv");
             var initialLoadTimesFilePath = Path.Combine(testCase.ResultsDirectory, "InitialLoadTimesFile.csv");
 
-            var initialLoadTimeprimePage = ExecutePrimeTest(driver, iteration, primeFilePath, testCase.Url);
-            var initialLoadTimeListPage =
-                ExecuteListPageModificationTest(driver, iteration, setColorListPageFilePath, filterListPageFilePath, testCase.Url);
+
+
+            long? initialLoadTimeprimePage = null; 
             
+            long? initialLoadTimeListPage = null; 
+            
+             initialLoadTimeListPage =
+                 ExecuteListPageModificationTest(iteration, setColorListPageFilePath, filterListPageFilePath,
+                     testCase.Url);
+             initialLoadTimeprimePage = ExecutePrimeTest(iteration, primeFilePath, testCase.Url);
+
             ExecuteListPageWarmStartTest(iteration, warmStartListPageFilePath, testCase.Url);
-            
+
             var dataLine = $"{iteration};{initialLoadTimeprimePage}ms;{initialLoadTimeListPage}ms;";
             AppendDataToFile(initialLoadTimesFilePath, dataLine);
         }
 
-        private static long ExecutePrimeTest(IWebDriver driver, int i, string filePath, string url)
+        private static long ExecutePrimeTest(int i, string filePath, string url)
         {
+            using IWebDriver driver = new ChromeDriver();
             Console.WriteLine($"-------------------------------------");
             Console.WriteLine("Starting Test for Prime Page");
 
-            var initialLoadTime = NavigateToUrl(driver, url+"/primePage", "primebtn");
+            var initialLoadTime = NavigateToUrl(driver, url + "/primePage", "primebtn");
 
             var calculateButton = driver.FindElement(By.Id("primebtn"));
 
@@ -101,7 +107,7 @@ namespace SeleniumTest.SeleniumTest
             calcTracker.StopTime();
 
             var time = $"{calcTracker.GetTime()}ms";
-            var memory = $"{calcTracker.GetMemoryUsage()}mb";
+            var memory = $"{calcTracker.GetMemoryUsage() / 1024 / 1024}mb";
             var processorTime = $"{calcTracker.GetCpuUsage()}ms";
 
             string dataLine = $"{i};{time};{memory};{processorTime};";
@@ -114,23 +120,19 @@ namespace SeleniumTest.SeleniumTest
 
             return initialLoadTime;
         }
+        
 
-        private static void WaitForPageLoad(int milliseconds)
-        {
-            Thread.Sleep(milliseconds);
-        }
-
-        private static long ExecuteListPageModificationTest(IWebDriver driver, int i, string setColorListPageFilePath,
+        private static long ExecuteListPageModificationTest(int i, string setColorListPageFilePath,
             string filterListPageFilePath, string url)
         {
+            using IWebDriver driver = new ChromeDriver();
             Console.WriteLine($"-------------------------------------");
             Console.WriteLine("Starting Test for List Page");
 
-            var initialLoadTime = NavigateToUrl(driver, url + "/listPage");
-            WaitForPageLoad(4000);
+            var initialLoadTime = NavigateToUrl(driver, url + "/listPage" , "togglebrandbtn");
 
-            ExecuteToggle(driver, i, filterListPageFilePath);
-            ExecuteColorSet(driver, i, setColorListPageFilePath);
+            /*ExecuteToggle(driver, i, filterListPageFilePath);*/
+            /*ExecuteColorSet(driver, i, setColorListPageFilePath);*/
 
             return initialLoadTime;
         }
@@ -150,7 +152,7 @@ namespace SeleniumTest.SeleniumTest
             colorTestTracker.StopTime();
 
             var time = $"{colorTestTracker.GetTime()}ms";
-            var memory = $"{colorTestTracker.GetMemoryUsage()}mb";
+            var memory = $"{colorTestTracker.GetMemoryUsage() / 1024 / 1024}mb";
             var processorTime = $"{colorTestTracker.GetCpuUsage()}ms";
 
             var dataLine = $"{i};{time};{memory};{processorTime};";
@@ -178,7 +180,7 @@ namespace SeleniumTest.SeleniumTest
             toggleTestTracker.StopTime();
 
             var time = $"{toggleTestTracker.GetTime()}ms";
-            var memory = $"{toggleTestTracker.GetMemoryUsage()}mb";
+            var memory = $"{toggleTestTracker.GetMemoryUsage() / 1024 / 1024}mb";
             var processorTime = $"{toggleTestTracker.GetCpuUsage()}ms";
 
             var dataLine = $"{i};{time};{memory};{processorTime};";
@@ -208,7 +210,7 @@ namespace SeleniumTest.SeleniumTest
             warmStartTestTracker.StopTime();
 
             var time = $"{warmStartTestTracker.GetTime()}ms";
-            var memory = $"{warmStartTestTracker.GetMemoryUsage()}mb";
+            var memory = $"{warmStartTestTracker.GetMemoryUsage() / 1024 / 1024}mb";
             var processorTime = $"{warmStartTestTracker.GetCpuUsage()}ms";
 
             var dataLine = $"{i};{time};{memory};{processorTime};";
@@ -235,14 +237,14 @@ namespace SeleniumTest.SeleniumTest
             {
                 try
                 {
-                    new WebDriverWait(driver, TimeSpan.FromSeconds(20)).Until(ExpectedConditions.ElementToBeClickable(By.Id(load)));
+                    new WebDriverWait(driver, TimeSpan.FromSeconds(200)).Until(
+                        ExpectedConditions.ElementToBeClickable(By.Id(load)));
                 }
                 catch (NoSuchElementException e)
                 {
                 }
-               
             }
-            
+
             initTracker.StopTime();
 
             Console.WriteLine($"-------------------------------------");
@@ -254,7 +256,7 @@ namespace SeleniumTest.SeleniumTest
 
             return initTracker.GetTime();
         }
-        
+
         private static void AppendDataToFile(string filePath, string data)
         {
             using var writer = new StreamWriter(filePath, true);
