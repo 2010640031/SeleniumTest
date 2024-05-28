@@ -19,7 +19,7 @@ namespace SeleniumTest.SeleniumTest
 
             var testCases = new List<TestCase>
             {
-                /*new() { Name = "Angular", Url = "http://localhost:44432", ResultsDirectory = AngularResults },*/
+                new() { Name = "Angular", Url = "http://localhost:44432", ResultsDirectory = AngularResults },
                 new() { Name = "Blazor", Url = "http://localhost:5046", ResultsDirectory = BlazorResults }
             };
 
@@ -131,8 +131,8 @@ namespace SeleniumTest.SeleniumTest
 
             var initialLoadTime = NavigateToUrl(driver, url + "/listPage" , "togglebrandbtn");
 
-            /*ExecuteToggle(driver, i, filterListPageFilePath);*/
-            /*ExecuteColorSet(driver, i, setColorListPageFilePath);*/
+            ExecuteToggle(driver, i, filterListPageFilePath);
+            ExecuteColorSet(driver, i, setColorListPageFilePath);
 
             return initialLoadTime;
         }
