@@ -33,7 +33,7 @@ namespace SeleniumTest.SeleniumTest
                 for (var i = 1; i < 101; i++)
                 {
                     ExecuteBaselineTest();
-                    /*ExecuteTests(i, testCase);*/
+                    ExecuteTests(i, testCase);
                 }
             }
 
